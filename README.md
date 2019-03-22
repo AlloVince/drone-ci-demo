@@ -1,4 +1,4 @@
-# A Demo to show Workflow of Drone CI + Gitflow + Semantic Release + Kubernetes
+## A Demo to show workflow of Drone CI + GitFlow + Semantic Release + Kubernetes
 
 
 - [Github repo](https://github.com/AlloVince/drone-ci-demo)
