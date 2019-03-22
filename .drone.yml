@@ -1,3 +1,4 @@
+---
 kind: pipeline
 name: deploy
 
@@ -7,15 +8,63 @@ steps:
     commands:
       - node test/index.js
     when:
-      branch: master
-      event: push
-  - name: build-image
+      branch:
+        include:
+          - feature/*
+          - master
+          - dev
+      event:
+        include:
+          - push
+          - pull_request
+
+  - name: build-branch-image
     image: plugins/docker
     settings:
       repo: allovince/drone-ci-demo
       username: allovince
       password:
         from_secret: DOCKER_PASSWORD
-      auto_tag: true
+      tag:
+        - ${DRONE_BRANCH##feature/}
+    when:
+      branch: feature/*
+      event: push
+
+  - name: build-test-image
+    image: plugins/docker
+    settings:
+      repo: allovince/drone-ci-demo
+      username: allovince
+      password:
+        from_secret: DOCKER_PASSWORD
+      tag:
+        - test
+    when:
+      branch: dev
+      event: push
+
+  - name: build-staging-image
+    image: plugins/docker
+    settings:
+      repo: allovince/drone-ci-demo
+      username: allovince
+      password:
+        from_secret: DOCKER_PASSWORD
+      tag:
+        - latest
+    when:
+      branch: master
+      event: pull_request
+
+  - name: build-production-image
+    image: plugins/docker
+    settings:
+      repo: allovince/drone-ci-demo
+      username: allovince
+      password:
+        from_secret: DOCKER_PASSWORD
+      tag:
+        - ${DRONE_TAG}
     when:
       event: tag
