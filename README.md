@@ -24,3 +24,44 @@ steps:
     - echo "hello world"
 ```
 
+## Step 2: For single person, manually release
+
+1. Add a secret in Drone, key is `DOCKER_PASSWORD`, value is your docker registry password
+
+2. prepare `.drone.yml`
+
+```
+kind: pipeline
+name: deploy
+
+steps:
+  - name: pre-check
+    image: node:10
+    environment:
+      DOCKER_PASSWORD:
+        from_secret: DOCKER_PASSWORD
+    commands:
+      - echo $${DOCKER_PASSWORD}
+  - name: unit-test
+    image: node:10
+    commands:
+      - node test/index.js
+    when:
+      branch: master
+      event: push
+  - name: build-image
+    image: plugins/docker
+    settings:
+      repo: allovince/drone-ci-demo
+      username: allovince
+      password:
+        from_secret: DOCKER_PASSWORD
+      auto_tag: true
+    when:
+      event: tag
+```
+
+3. push to master branch will trigger unit test
+
+4. manually release on github will trigger building docker image
+
