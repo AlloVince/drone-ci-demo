@@ -3,6 +3,23 @@ kind: pipeline
 name: deploy
 
 steps:
+  - name: pre-check
+    image: docker
+    environment:
+      DOCKER_PASSWORD:
+        from_secret: DOCKER_PASSWORD
+      MY_TELEGRAM_TOKEN:
+        from_secret: MY_TELEGRAM_TOKEN
+      MY_TELEGRAM_ID:
+        from_secret: MY_TELEGRAM_ID
+      GITHUB_TOKEN:
+        from_secret: GITHUB_TOKEN
+    commands:
+      - echo $${DOCKER_PASSWORD}
+      - echo $${MY_TELEGRAM_TOKEN}
+      - echo $${MY_TELEGRAM_ID}
+      - echo $${GITHUB_TOKEN}
+
   - name: unit-test
     image: node:10
     commands:
@@ -56,6 +73,17 @@ steps:
     when:
       branch: master
       event: pull_request
+
+  - name: semantic-release
+    image: gtramontina/semantic-release:15.13.3
+    environment:
+      GITHUB_TOKEN:
+        from_secret: GITHUB_TOKEN
+    entrypoint:
+      - semantic-release
+    when:
+      branch: master
+      event: push
 
   - name: build-production-image
     image: plugins/docker
