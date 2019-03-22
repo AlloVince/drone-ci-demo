@@ -2,7 +2,27 @@ kind: pipeline
 name: deploy
 
 steps:
-- name: hello-world
-  image: docker
-  commands:
-    - echo "hello world"
+  - name: pre-check
+    image: node:10
+    environment:
+      DOCKER_PASSWORD:
+        from_secret: DOCKER_PASSWORD
+    commands:
+      - echo $${DOCKER_PASSWORD}
+  - name: unit-test
+    image: node:10
+    commands:
+      - node test/index.js
+    when:
+      branch: master
+      event: push
+  - name: build-image
+    image: plugins/docker
+    settings:
+      repo: allovince/drone-ci-demo
+      username: allovince
+      password:
+        from_secret: DOCKER_PASSWORD
+      auto_tag: true
+    when:
+      event: push
