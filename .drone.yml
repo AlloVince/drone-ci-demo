@@ -1,0 +1,8 @@
+kind: pipeline
+name: deploy
+
+steps:
+- name: hello-world
+  image: docker
+  commands:
+    - echo "hello world"

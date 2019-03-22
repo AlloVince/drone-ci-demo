@@ -1,0 +1,154 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: drone-rbac
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone-secrets
+  namespace: default
+  labels:
+    app: drone-secrets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drone-secrets
+  template:
+    metadata:
+      labels:
+        app: drone-secrets
+    spec:
+      containers:
+        - name: drone-secrets
+          image: drone/kubernetes-secrets
+          imagePullPolicy: Always
+          env:
+            - name: SECRET_KEY
+              value: your_secret_key
+          ports:
+            - name: http
+              containerPort: 3000
+      restartPolicy: Always
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: drone-secrets-service
+  namespace: default
+spec:
+  selector:
+    app: drone-secrets
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      name: http
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone-server
+  namespace: default
+  labels:
+    app: drone-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drone-server
+  template:
+    metadata:
+      labels:
+        app: drone-server
+    spec:
+      containers:
+        - name: drone-server
+          image: drone/drone:1.0.0-rc.6
+          imagePullPolicy: Always
+          env:
+            - name: DRONE_KUBERNETES_ENABLED
+              value: "true"
+            - name: DRONE_KUBERNETES_NAMESPACE
+              value: default
+            - name: DRONE_GITHUB_SERVER
+              value: https://github.com
+            - name: DRONE_GITHUB_CLIENT_ID
+              value: your_github_client_id
+            - name: DRONE_GITHUB_CLIENT_SECRET
+              value: your_github_client_secret
+            - name: DRONE_SERVER_HOST
+              value: your_domain
+            - name: DRONE_SERVER_PROTO
+              value: https
+            - name: DRONE_DATABASE_DRIVER
+              value: sqlite3
+            - name: DRONE_DATABASE_DATASOURCE
+              value: "/drone/drone.sqlite"
+            - name: DRONE_USER_CREATE
+              value: username:AlloVince,admin:true
+            - name: DRONE_SECRET_SECRET
+              value: your_secret_key
+            - name: DRONE_SECRET_ENDPOINT
+              value: http://drone-secrets-service
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+          volumeMounts:
+            - name: drone-pvc
+              mountPath: "/drone"
+      volumes:
+        - name: drone-pvc
+          persistentVolumeClaim:
+            claimName: drone-pvc
+      restartPolicy: Always
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: drone-server-service
+  namespace: default
+spec:
+  selector:
+    app: drone-server
+  ports:
+    - protocol: TCP
+      port: 80
+      name: http
+
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: drone-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http,https
+spec:
+  rules:
+    - host: your_domain
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: drone-server-service
+              servicePort: 80
+
