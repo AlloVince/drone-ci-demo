@@ -1,5 +1,8 @@
 ## A Demo to show workflow of Drone CI + GitFlow + Semantic Release + Kubernetes
 
+[![Build Status](https://cloud.drone.io/api/badges/AlloVince/drone-ci-demo/status.svg)](https://cloud.drone.io/AlloVince/drone-ci-demo)
+
+Step by step, to show how to build a powerful team development workflow with CI
 
 - [Github repo](https://github.com/AlloVince/drone-ci-demo)
 - [Drone CI of this repo](https://cloud.drone.io/AlloVince/drone-ci-demo)
@@ -9,11 +12,11 @@
 
 1. Use drone cloud or setup a private drone by k8s
 
-Kubernetes config could check [./kubernetes]
+Kubernetes config files under [./kubernetes](./kubernetes)
 
 2. prepare `.drone.yml`
 
-```
+```yml
 kind: pipeline
 name: deploy
 
@@ -30,18 +33,11 @@ steps:
 
 2. prepare `.drone.yml`
 
-```
+```yml
 kind: pipeline
 name: deploy
 
 steps:
-  - name: pre-check
-    image: node:10
-    environment:
-      DOCKER_PASSWORD:
-        from_secret: DOCKER_PASSWORD
-    commands:
-      - echo $${DOCKER_PASSWORD}
   - name: unit-test
     image: node:10
     commands:
