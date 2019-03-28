@@ -96,3 +96,24 @@ steps:
         - ${DRONE_TAG}
     when:
       event: tag
+
+  - name: k8s-deploy
+    image: quay.io/honestbee/drone-kubernetes
+    settings:
+      kubernetes_server:
+        from_secret: KUBERNETES_SERVER
+      kubernetes_cert:
+        from_secret: KUBERNETES_CERT
+      kubernetes_token:
+        from_secret: KUBERNETES_TOKEN
+      namespace: default
+      deployment: ci-demo-deployment
+      repo: allovince/drone-ci-demo
+      container: ci-demo
+      tag:
+        - ${DRONE_TAG}
+    # remove commands in real production env
+    commands:
+      - echo "kubectl -n default set image deployment/ci-demo-deployment ci-demo=allovince/drone-ci-demo:${DRONE_TAG}"
+    when:
+      event: tag

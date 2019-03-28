@@ -1,0 +1,16 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ci-demo-deployment
+  namespace: default
+  labels:
+    app: ci-demo
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - image: allovince/drone-ci-demo
+          name: ci-demo
+      restartPolicy: Always
