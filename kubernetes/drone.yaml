@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
         - name: drone-server
-          image: drone/drone:1.0.0-rc.6
+          image: drone/drone:1.0.0
           imagePullPolicy: Always
           env:
             - name: DRONE_KUBERNETES_ENABLED
